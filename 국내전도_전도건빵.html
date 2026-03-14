@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국내전도 지원신청 관리</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
+.app{max-width:740px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:18px;font-weight:600;margin-bottom:1.5rem;color:#1a1a1a}
+.tab-bar{display:flex;border-bottom:1px solid #e0e0d8;margin-bottom:1.5rem}
+.tab{padding:10px 20px;font-size:14px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.tab.active{color:#1a1a1a;border-bottom:2px solid #1a1a1a;font-weight:500}
+.section{display:none}.section.active{display:block}
+
+/* 공통 */
+.card{background:#fff;border:1px solid #e8e8e0;border-radius:12px;padding:1.5rem;margin-bottom:1.25rem}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:#666;margin-bottom:5px}
+.req{color:#e24b4a;margin-left:2px}
+.field input,.field select,.field textarea{width:100%;font-size:14px;border-radius:8px;border:1px solid #d0d0c8;padding:9px 12px;background:#fff;color:#1a1a1a;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#185fa5}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.section-label{font-size:11px;font-weight:600;color:#888;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px}
+
+/* 이벤트 배너 */
+.event-banner{background:#f0f0e8;border:1px solid #e0e0d0;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+.dot-open{background:#3b6d11}.dot-closed{background:#e24b4a}
+.event-label{font-size:11px;color:#666;margin-bottom:4px;display:flex;align-items:center}
+.event-item{font-size:22px;font-weight:600;margin-bottom:5px}
+.event-period{font-size:13px;color:#666}
+.event-period span{color:#1a1a1a;font-weight:500}
+.event-desc{background:#fff;border:1px solid #e8e8e0;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;font-size:14px;line-height:1.8;white-space:pre-wrap}
+.event-closed{background:#feecec;border:1px solid #f09595;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;color:#a32d2d;font-size:14px;text-align:center}
+
+/* 교회 유형 */
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.type-item{padding:11px 8px;border:1px solid #e0e0d0;border-radius:8px;cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:#888;transition:all 0.15s}
+.type-item:hover{border-color:#aaa;background:#f8f8f0;color:#1a1a1a}
+.type-item.selected{border-color:#185fa5;background:#e6f1fb;color:#185fa5}
+
+/* 수량 */
+.qty-row{display:flex;gap:8px}
+.qty-row input[type=number]{flex:1;-moz-appearance:textfield}
+.qty-row input[type=number]::-webkit-inner-spin-button,.qty-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+.qty-unit{display:flex;align-items:center;padding:9px 14px;background:#f0f0e8;border:1px solid #d0d0c8;border-radius:8px;font-size:14px;color:#666;white-space:nowrap}
+
+/* 버튼 */
+.submit-btn{width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin-top:8px;font-family:inherit;font-weight:500}
+.submit-btn:hover{background:#333}
+.submit-btn:disabled{opacity:0.35;cursor:not-allowed}
+.save-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:7px 18px;font-size:13px;cursor:pointer;font-family:inherit}
+.save-btn:hover{background:#f5f5f0}
+
+/* 파트너 힌트 */
+.partner-hint{margin-top:5px;font-size:12px;color:#666;min-height:18px}
+
+/* 확인 팝업 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:1.5rem;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.modal .sub{font-size:12px;color:#888;margin-bottom:1.25rem}
+.confirm-box{display:flex;align-items:flex-start;gap:10px;padding:12px;background:#f5f5f0;border-radius:8px;margin-bottom:1.25rem}
+.confirm-box .clabel{font-size:11px;color:#888;margin-bottom:3px}
+.confirm-box .cvalue{font-size:14px;font-weight:500;line-height:1.5}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-back{padding:10px;background:#fff;border:1px solid #ccc;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
+.btn-confirm{padding:10px;background:#1a1a1a;border:none;border-radius:8px;font-size:14px;cursor:pointer;color:#fff;font-family:inherit}
+
+/* 성공 */
+.success-box{background:#eaf3de;border:1px solid #97c459;border-radius:12px;padding:2rem;text-align:center}
+.success-box p{color:#3b6d11;font-size:14px;line-height:1.7}
+
+/* 관리자 잠금 */
+.admin-lock{background:#fff;border:1px solid #e8e8e0;border-radius:12px;padding:2rem;text-align:center;max-width:320px;margin:0 auto}
+.admin-lock h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+.admin-lock input{width:100%;font-size:16px;border-radius:8px;border:1px solid #d0d0c8;padding:10px 12px;text-align:center;letter-spacing:6px;margin-bottom:10px;font-family:inherit}
+.admin-lock button{width:100%;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer}
+.admin-panel{display:none}.admin-panel.open{display:block}
+
+/* 통계 */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-card{background:#fff;border:1px solid #e8e8e0;border-radius:8px;padding:12px 14px}
+.stat-card .n{font-size:22px;font-weight:600}
+.stat-card .l{font-size:11px;color:#888;margin-bottom:4px}
+
+/* 노회 차트 */
+.nohoe-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.nohoe-label{font-size:12px;color:#666;width:100px;flex-shrink:0;text-align:right}
+.nohoe-bar-wrap{flex:1;background:#f0f0e8;border-radius:4px;height:18px;overflow:hidden}
+.nohoe-bar{height:100%;background:#185fa5;border-radius:4px;transition:width 0.4s}
+.nohoe-cnt{font-size:12px;font-weight:500;width:28px;flex-shrink:0}
+
+/* 필터 */
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-row select,.filter-row input{font-size:13px;border-radius:8px;border:1px solid #d8d8d0;padding:7px 10px;background:#fff;font-family:inherit}
+.filter-row input{flex:1;min-width:140px}
+.list-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.export-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit}
+.export-btn:hover{background:#f5f5f0}
+
+/* 목록 */
+.list-hd{display:grid;grid-template-columns:1.8fr 1.3fr 1fr 1.6fr 0.5fr;gap:6px;padding:8px 12px;font-size:11px;color:#888;background:#f5f5f0;border-radius:8px 8px 0 0;border:1px solid #e0e0d8;border-bottom:none}
+.list-row{display:grid;grid-template-columns:1.8fr 1.3fr 1fr 1.6fr 0.5fr;gap:6px;padding:10px 12px;font-size:13px;border:1px solid #e0e0d8;border-top:none;background:#fff}
+.list-row:hover{background:#f8f8f3}
+.list-row:last-child{border-radius:0 0 8px 8px}
+.no-data{padding:2rem;text-align:center;color:#aaa;font-size:13px;border:1px solid #e0e0d8;border-top:none;border-radius:0 0 8px 8px;background:#fff}
+.del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:13px}
+.del-btn:hover{color:#e24b4a}
+.cell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.page-row{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:center}
+.pg-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit}
+.pg-btn:disabled{opacity:0.3;cursor:not-allowed}
+.pg-info{font-size:12px;color:#888}
+
+/* 토글 */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;margin-bottom:10px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:11px;cursor:pointer;transition:0.2s}
+.slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;top:3px;background:white;border-radius:50%;transition:0.2s}
+.toggle input:checked+.slider{background:#3b6d11}
+.toggle input:checked+.slider:before{transform:translateX(18px)}
+
+@media(max-width:480px){
+  .row2{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .type-grid{grid-template-columns:repeat(3,1fr)}
+  .list-hd,.list-row{grid-template-columns:2fr 1.2fr 0.4fr}
+  .list-hd span:nth-child(3),.list-hd span:nth-child(4),
+  .list-row span:nth-child(3),.list-row span:nth-child(4){display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>📋 서울광염교회 국내전도 지원신청</h1>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('apply')">신청하기</button>
+    <button class="tab" onclick="switchTab('admin')">관리자</button>
+  </div>
+
+  <!-- 신청 탭 -->
+  <div class="section active" id="tab-apply">
+    <div id="apply-content"></div>
+  </div>
+
+  <!-- 관리자 탭 -->
+  <div class="section" id="tab-admin">
+    <div id="admin-lock-wrap">
+      <div class="admin-lock">
+        <h3>🔒 관리자 로그인</h3>
+        <input type="password" id="pw-input" placeholder="비밀번호" onkeydown="if(event.key==='Enter')checkPw()">
+        <button onclick="checkPw()">로그인</button>
+        <p style="font-size:12px;color:#aaa;margin-top:10px">초기 비밀번호: 1234</p>
+      </div>
+    </div>
+    <div class="admin-panel" id="admin-panel">
+      <div class="card">
+        <div class="section-label">이벤트 설정</div>
+        <div class="field"><label>지원 항목명</label><input id="s-item" placeholder="예: 스피커, 텀블러, 책..."></div>
+        <div class="row2">
+          <div class="field"><label>신청 시작일</label><input type="date" id="s-start"></div>
+          <div class="field"><label>신청 마감일</label><input type="date" id="s-end"></div>
+        </div>
+        <div class="field"><label>수량 단위</label><input id="s-unit" placeholder="예: 개, 권, 박스..."></div>
+        <div class="field"><label>이벤트 안내 (신청 화면에 표시)</label><textarea id="s-desc" placeholder="지원 설명, 조건, 배송 안내 등을 자유롭게 작성하세요..."></textarea></div>
+        <div class="toggle-row">
+          <label style="font-size:14px">신청 받기</label>
+          <label class="toggle"><input type="checkbox" id="s-open" checked><span class="slider"></span></label>
+        </div>
+        <button class="save-btn" onclick="saveSettings()">💾 설정 저장</button>
+      </div>
+
+      <div class="stats-row" id="admin-stats"></div>
+
+      <div class="card">
+        <div class="section-label" style="margin-bottom:12px">노회별 신청 현황</div>
+        <div id="nohoe-chart"></div>
+      </div>
+
+      <div class="list-actions">
+        <span class="section-label" style="margin:0">신청 목록 (<span id="list-count">0</span>건)</span>
+        <button class="export-btn" onclick="exportCSV()">⬇ CSV 내보내기</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" id="f-search" placeholder="교회명 / 목사님 검색..." oninput="renderList()">
+        <select id="f-nohoe-filter" onchange="renderList()"><option value="">전체 노회</option></select>
+      </div>
+      <div class="list-hd"><span>교회명</span><span>노회</span><span>연락처</span><span>주소</span><span></span></div>
+      <div id="admin-list"></div>
+      <div class="page-row">
+        <button class="pg-btn" id="pg-prev" onclick="changePage(-1)">← 이전</button>
+        <span class="pg-info" id="pg-info"></span>
+        <button class="pg-btn" id="pg-next" onclick="changePage(1)">다음 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 주소 확인 팝업 -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3>📦 배송지 주소를 확인해주세요</h3>
+    <p class="sub">아래 주소로 택배가 발송됩니다. 정확한지 확인 후 제출해주세요.</p>
+    <div class="confirm-box">
+      <div>
+        <div class="clabel">입력하신 주소</div>
+        <div class="cvalue" id="confirm-address"></div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-back" onclick="closeConfirm()">← 수정하기</button>
+      <button class="btn-confirm" onclick="finalSubmit()">맞습니다, 제출하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NOHOE_LIST=[
+  {name:'강동노회',pastor:'이강선 목사'},
+  {name:'전서노회',pastor:'류병택 목사'},
+  {name:'제주노회',pastor:'박창건 목사'},
+  {name:'진주노회',pastor:'정계규 목사'},
+  {name:'황해노회',pastor:'한종근 목사'},
+  {name:'구미노회',pastor:'안순범 목사'},
+  {name:'무안노회',pastor:'이윤동 목사'},
+  {name:'경중노회',pastor:'박종민 목사'},
+  {name:'충북동노회',pastor:'권혁일 목사'},
+  {name:'서산태안지역',pastor:'이광희 목사'},
+  {name:'공주논산지역',pastor:'김창수 목사'},
+  {name:'여수지역',pastor:'왕재권 목사'},
+  {name:'무지역',pastor:'김권능 목사'},
+  {name:'이주민교회연합',pastor:''},
+];
+const CHURCH_TYPES=['자립지향교회','차상위교회','자립교회'];
+
+const DEFAULT_SETTINGS={item:'2026년 전도건빵 축제',unit:'박스',start:'2026-03-13',end:'2026-03-21',desc:'2026 국내전도 파트너노회 전도건빵 축제 이벤트입니다.\n신청하신 교회에 전도건빵을 발송해 드립니다.\n정확한 주소를 입력해 주세요.',open:true};
+const SETTINGS_VER='v2026-03-13';function loadSettings(){try{const v=localStorage.getItem('gj_ver');const s=localStorage.getItem('gj_settings');if(v===SETTINGS_VER&&s){return JSON.parse(s);}localStorage.setItem('gj_ver',SETTINGS_VER);localStorage.setItem('gj_settings',JSON.stringify(DEFAULT_SETTINGS));return DEFAULT_SETTINGS;}catch(e){return DEFAULT_SETTINGS;}}
+let settings=loadSettings();
+
+let applications=[
+{id:1,nohoe:'무안노회',church:'꿈이있는비전교회',pastor:'표성욱',phone:'010-9979-6989',address:'신안군 임자면 이흑암길 35 1층',type:'자립지향교회',qty:1,unit:'권'},
+{id:2,nohoe:'구미노회',church:'주영광교회',pastor:'이규희',phone:'010-9977-0692',address:'경북 구미시 인동17길29. 대동빌딩3층',type:'자립지향교회',qty:1,unit:'권'},
+{id:3,nohoe:'서산태안지역',church:'곡천장로교회',pastor:'한준호',phone:'010-9973-3445',address:'충남 홍성군 갈산면 갈산서길 473번길 125-18',type:'자립지향교회',qty:1,unit:'권'},
+{id:4,nohoe:'강동노회',church:'기화교회',pastor:'김학범',phone:'010-9907-8291',address:'강원특별자치도 평창군 미탄면 평창동강로 471-29기화교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:5,nohoe:'제주노회',church:'주사랑서홍교회',pastor:'박성남',phone:'010-9866-4192',address:'제주도 서귀포시 홍중로 141-1',type:'자립지향교회',qty:1,unit:'권'},
+{id:6,nohoe:'전서노회',church:'정읍시내산교회',pastor:'배승수',phone:'010-9775-0369',address:'전북정읍시행정길55-9',type:'자립지향교회',qty:1,unit:'권'},
+{id:7,nohoe:'무안노회',church:'마산교회',pastor:'김성수',phone:'010-9740-8291',address:'전남무안군 현경면 마산길122-5 (마산교회)',type:'자립지향교회',qty:1,unit:'권'},
+{id:8,nohoe:'강동노회',church:'영월제일교회',pastor:'김영식',phone:'010-9722-5349',address:'강원도 영월군 영월읍 은행나무 3길 40 영월제일교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:9,nohoe:'제주노회',church:'예인교회',pastor:'심재하',phone:'010-9647-1113',address:'귀덕 4길 1 (2층)',type:'자립지향교회',qty:1,unit:'권'},
+{id:10,nohoe:'여수지역',church:'금장교회',pastor:'차도진',phone:'010-9601-4663',address:'전남 고흥군 금산면 금장길15.금장교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:11,nohoe:'공주논산지역',church:'참좋은교회',pastor:'김진인',phone:'010-9552-8920',address:'충남 공주시 관골2길36 605동 708호',type:'자립지향교회',qty:1,unit:'권'},
+{id:12,nohoe:'무안노회',church:'운남교회',pastor:'방종국',phone:'010-9550-1924',address:'전남 무안군 운남면 운해로 603-13 운남교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:13,nohoe:'충북동노회',church:'제자교회',pastor:'권혁일',phone:'010-9425-6799',address:'충북 제천시 용두대로7안길6 제자교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:14,nohoe:'공주논산지역',church:'광석서부교회',pastor:'박성영',phone:'010-9257-0191',address:'충남 논산시 광석면 오강2길 18',type:'자립지향교회',qty:1,unit:'권'},
+{id:15,nohoe:'강동노회',church:'역둔',pastor:'김종현',phone:'010-9237-0691',address:'강원특별자치도 삼척시 하장면 역둔원동로 12-41',type:'자립지향교회',qty:1,unit:'권'},
+{id:16,nohoe:'구미노회',church:'이끌림교회',pastor:'유현규',phone:'010-9210-5732',address:'경북 구미시 인동31길10-10 해인빌 1층',type:'자립지향교회',qty:1,unit:'권'},
+{id:17,nohoe:'강동노회',church:'용산',pastor:'한상구',phone:'010-8918-9517',address:'강원도 정선군 임계면 달탄1길38-16',type:'자립지향교회',qty:1,unit:'권'},
+{id:18,nohoe:'경중노회',church:'팔복교회',pastor:'박정재',phone:'010-8851-0691',address:'경북 단밀면 팔등길 8-8',type:'자립지향교회',qty:1,unit:'권'},
+{id:19,nohoe:'무안노회',church:'강정제일교회',pastor:'송기술',phone:'010-8761-5295',address:'전남 무안군. 청계면 태천길 39-8',type:'자립지향교회',qty:1,unit:'권'},
+{id:20,nohoe:'진주노회',church:'율도교회',pastor:'박석만',phone:'010-8725-1525',address:'경남 남해군 창선면 서부로 1066번길 42-3',type:'자립지향교회',qty:1,unit:'권'},
+{id:21,nohoe:'공주논산지역',church:'채운교회',pastor:'서원택',phone:'010-8704-5924',address:'전북 익산시 망성면 동안로301 채운교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:22,nohoe:'전서노회',church:'해리교회',pastor:'서종완',phone:'010-8623-3014',address:'전북 고창군 해리면 하련1길 29',type:'자립지향교회',qty:1,unit:'권'},
+{id:23,nohoe:'구미노회',church:'구미중국교회',pastor:'김문한',phone:'010-8540-3607',address:'구미시 인동36길 23-31 (구평동)부영3단지 308동905호',type:'자립지향교회',qty:1,unit:'권'},
+{id:24,nohoe:'구미노회',church:'선한이웃',pastor:'손경목',phone:'010-8262-9182',address:'경북 구미시 인동46길 6 606동 306호',type:'자립지향교회',qty:1,unit:'권'},
+{id:25,nohoe:'여수지역',church:'예수촌교회',pastor:'서재형',phone:'010-7663-7560',address:'여수시 여서동 여문2로191 현대산업상가 2층 예수촌교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:26,nohoe:'제주노회',church:'제주광염',pastor:'박준범',phone:'010-7615-9990',address:'제주시 도남동 신성로10길 28',type:'자립지향교회',qty:1,unit:'권'},
+{id:27,nohoe:'강동노회',church:'양양 사랑교회',pastor:'황병구',phone:'010-7504-5801',address:'강원도 양양군 양양읍 단지길40',type:'자립지향교회',qty:1,unit:'권'},
+{id:28,nohoe:'전서노회',church:'내장산교회',pastor:'이종열',phone:'010-7459-3232',address:'전북 정읍시 부여길30',type:'자립지향교회',qty:1,unit:'권'},
+{id:29,nohoe:'무안노회',church:'주안에교회',pastor:'김승민',phone:'010-7447-1189',address:'전남 무안군 삼향읍 후광대로 274 도청프라자 608호',type:'자립지향교회',qty:1,unit:'권'},
+{id:30,nohoe:'구미노회',church:'복된교회',pastor:'이승진',phone:'010-7401-3477',address:'구미시 문장로7길7. 복된교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:31,nohoe:'충북동노회',church:'주음성교회',pastor:'김주진',phone:'010-7327-0528',address:'충북 음성군 음성읍 중암로 40번길 8(3층) 주음성교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:32,nohoe:'충북동노회',church:'문산교회',pastor:'정성수',phone:'010-7236-6925',address:'충주시 살미면 문산길 3-1 문산교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:33,nohoe:'경중노회',church:'신안교회',pastor:'이수경',phone:'010-7229-6211',address:'경북의성군 안평면 석전길14',type:'자립지향교회',qty:1,unit:'권'},
+{id:34,nohoe:'진주노회',church:'갑산교회',pastor:'이호경',phone:'010-7210-5401',address:'경남 합천군 율곡면 갑산리 630',type:'자립지향교회',qty:1,unit:'권'},
+{id:35,nohoe:'강동노회',church:'동해에덴',pastor:'정창기',phone:'010-7190-0692',address:'강원도 동해시 갈전길 40',type:'자립지향교회',qty:1,unit:'권'},
+{id:36,nohoe:'경중노회',church:'화신',pastor:'최천구',phone:'010-7156-5617',address:'경북 비안면 화신길26',type:'자립지향교회',qty:1,unit:'권'},
+{id:37,nohoe:'충북동노회',church:'행복한교회',pastor:'이진우',phone:'010-6755-6557',address:'충북 음성군 금왕읍 무극로 324번길15, 307동 801호',type:'자립지향교회',qty:1,unit:'권'},
+{id:38,nohoe:'여수지역',church:'개도여석교회',pastor:'강주성',phone:'010-6622-7950',address:'전남 여수시 화정면 여석안길 21-1',type:'자립지향교회',qty:1,unit:'권'},
+{id:39,nohoe:'제주노회',church:'사랑샘교회',pastor:'김태수',phone:'010-6620-6353',address:'제주시 조천읍 신북로270',type:'자립지향교회',qty:1,unit:'권'},
+{id:40,nohoe:'무안노회',church:'행복한교회',pastor:'양규환',phone:'010-6606-2834',address:'전남 무안군 운남면 운해로 214-10',type:'자립지향교회',qty:1,unit:'권'},
+{id:41,nohoe:'진주노회',church:'황계교회',pastor:'남상휘',phone:'010-6491-9136',address:'경남합천군 용주면 황계폭포로485-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:42,nohoe:'무안노회',church:'주향교회',pastor:'문동열',phone:'010-6436-0675',address:'전남 무안군 일로읍 백련로 680 주향교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:43,nohoe:'진주노회',church:'유천교회',pastor:'이현두',phone:'010-6337-9182',address:'경남 합천군 청덕면 앙진1길 7-6 사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:44,nohoe:'이주민교회연합',church:'포천하랑센터',pastor:'박승호',phone:'010-5934-2618',address:'포천시 소흘읍 솔모루로 31. 3층',type:'자립지향교회',qty:1,unit:'권'},
+{id:45,nohoe:'경중노회',church:'화전교회',pastor:'남외경',phone:'010-5773-1662',address:'경북 의성군 사곡면 사미 신감로 496',type:'자립지향교회',qty:1,unit:'권'},
+{id:46,nohoe:'경중노회',church:'경중노뢰',pastor:'김효창',phone:'010-5674-2719',address:'경북 의성군 옥산면 실업2길7 실업교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:47,nohoe:'전서노회',church:'고창서부교회',pastor:'최낙일',phone:'010-5601-7127',address:'전북 고창군 고창읍 전봉준로204-3 고창서부교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:48,nohoe:'진주노회',church:'목양',pastor:'이현종',phone:'010-5521-1904',address:'경남 진주시 하대로34번길11-20번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:49,nohoe:'충북동노회',church:'제천 큰사랑교회',pastor:'류창수',phone:'010-5503-4444',address:'충북제천시 죽하로 11길 13',type:'자립지향교회',qty:1,unit:'권'},
+{id:50,nohoe:'강동노회',church:'속초평강교회',pastor:'이강선',phone:'010-5378-7421',address:'강원도 속초시 미시령로 3359번길71-18',type:'자립지향교회',qty:1,unit:'권'},
+{id:51,nohoe:'공주논산지역',church:'우리들교회',pastor:'임재락',phone:'010-5250-5864',address:'충남 논산시 은진면 교와길 71-13',type:'자립지향교회',qty:1,unit:'권'},
+{id:52,nohoe:'강동노회',church:'한울교회',pastor:'강성오',phone:'010-5061-6406',address:'강원도 속초시 미시령로3359번길 15 동부아파트102동704호',type:'자립지향교회',qty:1,unit:'권'},
+{id:53,nohoe:'구미노회',church:'섬기는교회',pastor:'안순범',phone:'010-5058-1091',address:'경북 구미시 흥안로2길14-37',type:'자립지향교회',qty:1,unit:'권'},
+{id:54,nohoe:'진주노회',church:'소곡교회',pastor:'안승기',phone:'010-4705-5207',address:'경상남도 진주시 정촌면 정촌로 278번길 7 소곡교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:55,nohoe:'전서노회',church:'정읍 사랑의교회',pastor:'이성명',phone:'010-4591-4320',address:'전북 정읍시 천변로 394 양우내아파트105동 505호',type:'자립지향교회',qty:1,unit:'권'},
+{id:56,nohoe:'진주노회',church:'양보제일교회',pastor:'김상기',phone:'010-4573-2899',address:'경남 하동군 양보면 상고개로 271',type:'자립지향교회',qty:1,unit:'권'},
+{id:57,nohoe:'경중노회',church:'생물교회',pastor:'박충녕',phone:'010-4542-1280',address:'경북 의성군 단밀면 생송2길 101-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:58,nohoe:'이주민교회연합',church:'예수교 타이포천 안디옥교회',pastor:'이미희',phone:'010-4501-0995',address:'경기도 포천시 소흘읍 송우리 222-51 한국개나리APT 상가동 301호',type:'자립지향교회',qty:1,unit:'권'},
+{id:59,nohoe:'공주논산지역',church:'행복한교회(계룡)',pastor:'김병덕',phone:'010-4457-0091',address:'계룡시 장안2길 3-2 행복한교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:60,nohoe:'무안노회',church:'월선제일교회',pastor:'송연재',phone:'010-4416-7867',address:'전남 무안군 청계면 월선길 19 월선제일교회 사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:61,nohoe:'경중노회',church:'상신교회',pastor:'정상현',phone:'010-4366-3002',address:'경북 의성군 다인면 신락2길201',type:'자립지향교회',qty:1,unit:'권'},
+{id:62,nohoe:'이주민교회연합',church:'송우리다문화선교회',pastor:'정승진',phone:'010-4325-2077',address:'포천 소흘읍 솔모루로 98번길 11',type:'자립지향교회',qty:1,unit:'권'},
+{id:63,nohoe:'전서노회',church:'벧엘중앙교회',pastor:'정규철',phone:'010-4288-1007',address:'전북정읍시칠보면여옥길17번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:64,nohoe:'경중노회',church:'안계동부교회',pastor:'강무성',phone:'010-4282-5122',address:'경북 의성군 안계면 토매1길 127-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:65,nohoe:'제주노회',church:'이룸교회',pastor:'임효식',phone:'010-4265-0093',address:'제주시 중앙로 138, 이룸교회(4층)',type:'자립지향교회',qty:1,unit:'권'},
+{id:66,nohoe:'경중노회',church:'광전교회',pastor:'최중환',phone:'010-4154-0080',address:'경북 의성군 옥산면 금봉로 255',type:'자립지향교회',qty:1,unit:'권'},
+{id:67,nohoe:'무안노회',church:'일로제일교회',pastor:'박희기',phone:'010-4126-0286',address:'전남 무안군 일로읍 일로중앙로 20',type:'자립지향교회',qty:1,unit:'권'},
+{id:68,nohoe:'서산태안지역',church:'꿈이가득한교회',pastor:'김세광',phone:'010-4109-6575',address:'충남 예산군 삽교읍 애향 10길 4 꿈이가득한교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:69,nohoe:'강동노회',church:'증산중앙교회',pastor:'이일용',phone:'010-4046-5675',address:'강원도 정선군 남면 무릉2로 35-15',type:'자립지향교회',qty:1,unit:'권'},
+{id:70,nohoe:'진주노회',church:'진주불꽃교회',pastor:'정성영',phone:'010-3850-0691',address:'진주시 정촌면 삼일로 72번 18-5',type:'자립지향교회',qty:1,unit:'권'},
+{id:71,nohoe:'경중노회',church:'만리교회',pastor:'황수영',phone:'010-3847-8404',address:'경북 의성군 안사면 안사풍천길250 만리교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:72,nohoe:'강동노회',church:'도게성산교회',pastor:'한복규',phone:'010-3780-6647',address:'강원도 삼척시 도계읍 도계로 120-7 도게성산교회 2층',type:'자립지향교회',qty:1,unit:'권'},
+{id:73,nohoe:'경중노회',church:'남산교회',pastor:'이진복',phone:'010-3725-2591',address:'경북 의성군 비안면 서부로 1290-31',type:'자립지향교회',qty:1,unit:'권'},
+{id:74,nohoe:'강동노회',church:'인구',pastor:'김한국',phone:'010-3718-8291',address:'강원 양양군 현남면 인구중앙길 46-53',type:'자립지향교회',qty:1,unit:'권'},
+{id:75,nohoe:'구미노회',church:'주기쁨교회',pastor:'김희찬',phone:'010-3673-3284',address:'경북 구미시 금오대로 16길 24. 305호',type:'자립지향교회',qty:1,unit:'권'},
+{id:76,nohoe:'전서노회',church:'송산교회',pastor:'최상복',phone:'010-3644-2050',address:'전북 정읍시 송산1길124-8',type:'자립지향교회',qty:1,unit:'권'},
+{id:77,nohoe:'진주노회',church:'세간교회',pastor:'김진홍',phone:'010-3599-0229',address:'경남 의령군 세간2길 23-10',type:'자립지향교회',qty:1,unit:'권'},
+{id:78,nohoe:'여수지역',church:'우리가교회',pastor:'정지상',phone:'010-3432-0740',address:'전남 여수시 신월로 732-3, 3층 우리가교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:79,nohoe:'강동노회',church:'하늘샘교회',pastor:'정성태',phone:'010-3380-3490',address:'강원특별자치도 영월군 북면 하늘샘2길 17-3',type:'자립지향교회',qty:1,unit:'권'},
+{id:80,nohoe:'강동노회',church:'새소망교회',pastor:'이남윤',phone:'010-3345-0635',address:'강원특별자치도 강릉시 초당원길 4-8 1층',type:'자립지향교회',qty:1,unit:'권'},
+{id:81,nohoe:'서산태안지역',church:'양잠교회',pastor:'김택윤',phone:'010-3275-1191',address:'충남 태안군 남면 양잠길119',type:'자립지향교회',qty:1,unit:'권'},
+{id:82,nohoe:'경중노회',church:'원당교회',pastor:'지창호',phone:'010-3212-1374',address:'경북 의성군 원당1길 19-8 원당 교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:83,nohoe:'전서노회',church:'덕림교회',pastor:'강현순',phone:'010-3187-4255',address:'전북 고창군 무장면 덕림방축길13-9',type:'자립지향교회',qty:1,unit:'권'},
+{id:84,nohoe:'강동노회',church:'소금강교회',pastor:'박종민',phone:'010-3186-7950',address:'강릉시 연곡면 퇴곡2길 86-6',type:'자립지향교회',qty:1,unit:'권'},
+{id:85,nohoe:'강동노회',church:'송계장로교회',pastor:'윤종범',phone:'010-3143-0691',address:'강원도 정선군 임계면 서동로 4142-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:86,nohoe:'경중노회',church:'상전교회',pastor:'김규선',phone:'010-3059-8291',address:'경북 의성군 사곡면 상전길 41-7',type:'자립지향교회',qty:1,unit:'권'},
+{id:87,nohoe:'경중노회',church:'구천성은교회',pastor:'김종대',phone:'010-3057-9976',address:'경북 의성군 구천면 유산2길15 성은교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:88,nohoe:'경중노회',church:'신리교회',pastor:'안해호',phone:'010-2989-9714',address:'경북 의성군 사곡면 신리길 72-12',type:'자립지향교회',qty:1,unit:'권'},
+{id:89,nohoe:'강동노회',church:'태백에덴교회',pastor:'유승표',phone:'010-2968-8552',address:'강원도 태백시 방터골2길 13-10',type:'자립지향교회',qty:1,unit:'권'},
+{id:90,nohoe:'전서노회',church:'화호중앙교회',pastor:'한융희',phone:'010-2864-6291',address:'전북특별자치도 정읍시 신태인읍 화호7길43-5',type:'자립지향교회',qty:1,unit:'권'},
+{id:91,nohoe:'이주민교회연합',church:'송우벗사랑교회',pastor:'안정호',phone:'010-2779-0436',address:'경기도 포천시 솔모루로 92 송우벗사랑교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:92,nohoe:'여수지역',church:'화양중앙교회',pastor:'윤수진',phone:'010-2686-7468',address:'전남 여수시 화양면 소장길 65 화양중앙교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:93,nohoe:'구미노회',church:'구미사곡제일교회',pastor:'김정삼',phone:'010-2678-7991',address:'구미시 사곡로5길 33-1 사곡제일교회(김정삼)',type:'자립지향교회',qty:1,unit:'권'},
+{id:94,nohoe:'여수지역',church:'우리영광교회',pastor:'전행준',phone:'010-2610-0510',address:'전남 여수시 돌산읍 강남7길 34 1층 우리영광교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:95,nohoe:'진주노회',church:'남산교회',pastor:'고영익',phone:'010-2582-4697',address:'진주시 일반성면 일사로 380-19 1130',type:'자립지향교회',qty:1,unit:'권'},
+{id:96,nohoe:'진주노회',church:'수곡원당교회',pastor:'김광호',phone:'010-2550-4896',address:'경남 진주시 수곡면 원창길8 수곡원당교회 윗사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:97,nohoe:'진주노회',church:'입산',pastor:'소병룡',phone:'010-2399-4191',address:'경남 의령군 부림면 입산로188 입산교회 사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:98,nohoe:'서산태안지역',church:'신온선돌교회',pastor:'모규성',phone:'010-2300-5691',address:'충남 태안군 남면 드르니길 167',type:'자립지향교회',qty:1,unit:'권'},
+{id:99,nohoe:'전서노회',church:'고창주곡교회',pastor:'김윤기',phone:'010-2244-9226',address:'전북고창군고창읍 주곡2길 25번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:100,nohoe:'충북동노회',church:'서머나교회',pastor:'권종열',phone:'010-2082-7840',address:'충북 단양군 군청로 21 이편한세상 105동 1105호',type:'자립지향교회',qty:1,unit:'권'},
+{id:101,nohoe:'충북동노회',church:'오직예수교회',pastor:'박재규',phone:'010-2067-2463',address:'충북 제천시 청전대로 242 2층 오직예수교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:102,nohoe:'구미노회',church:'구미북부교회',pastor:'이일호',phone:'010-2039-2735',address:'경북 구미시 지산21길10-11',type:'자립지향교회',qty:1,unit:'권'},
+{id:103,nohoe:'무안노회',church:'무안북부교회',pastor:'박영근',phone:'010-6242-5196',address:'전남 무안군 무안읍 무안로 305',type:'자립지향교회',qty:1,unit:'권'},
+{id:104,nohoe:'경중노회',church:'덕봉교회',pastor:'김양은',phone:'010-2310-1897',address:'경북의성군신평면교덕길402-11',type:'자립지향교회',qty:1,unit:'권'},
+{id:105,nohoe:'진주노회',church:'송산교회',pastor:'최판동',phone:'010-5121-8397',address:'경남 의령군 유곡면 청정로8길 26-37',type:'자립지향교회',qty:1,unit:'권'},
+{id:106,nohoe:'강동노회',church:'도계은총',pastor:'나영진',phone:'010-4020-6560',address:'강원도 삼척시 도계읍 소달길 8-7',type:'자립지향교회',qty:1,unit:'권'},
+{id:107,nohoe:'경중노회',church:'무릉교회',pastor:'김성오',phone:'010-2085-2672',address:'경북 의성군 다인면 용무2길 207-8',type:'자립지향교회',qty:1,unit:'권'},
+{id:108,nohoe:'경중노회',church:'안정교회',pastor:'김영대',phone:'010-9379-6350',address:'경북 의성군 안계면 교화길 113-9',type:'자립지향교회',qty:1,unit:'권'},
+{id:109,nohoe:'공주논산지역',church:'향한교회',pastor:'강신환',phone:'010-6616-8410',address:'충남 계룡시 엄사면 번영로236',type:'자립지향교회',qty:1,unit:'권'},
+{id:110,nohoe:'경중노회',church:'홍해대전',pastor:'한도형',phone:'010-3914-0711',address:'경북 의성군 구천면 미천1길 80-5미천교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:111,nohoe:'강동노회',church:'부광교회',pastor:'이상도',phone:'010-3380-7338',address:'삼척시근덕면부남길60-30부광교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:112,nohoe:'경중노회',church:'사곡중앙교회',pastor:'임병주',phone:'010-4001-9297',address:'경북 의성군 의성사곡로 967-1 사곡중앙교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:113,nohoe:'전서노회',church:'왕촌교회',pastor:'이성우',phone:'010-2025-2183',address:'고창군 해리면 선운대로1219-8 왕촌교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:114,nohoe:'진주노회',church:'실로암교회',pastor:'이종태',phone:'010-4543-5365',address:'경남 진주시 초전남로 53번길 26-2',type:'자립지향교회',qty:1,unit:'권'},
+{id:115,nohoe:'강동노회',church:'언약의교회',pastor:'심성근',phone:'010-9925-0450',address:'강원도 강릉시 가작로303번길1 (2층)',type:'자립지향교회',qty:1,unit:'권'},
+{id:116,nohoe:'이주민교회연합',church:'한마음태국인교회',pastor:'김봉운',phone:'010-9874-4430',address:'경기도 동두천시 삼육사로 1324-35',type:'자립지향교회',qty:1,unit:'권'},
+{id:117,nohoe:'서산태안지역',church:'푸른교회',pastor:'민대식',phone:'010-9874-1355',address:'충남 태안군 태안읍 중앙로 159 5층',type:'자립지향교회',qty:1,unit:'권'},
+{id:118,nohoe:'공주논산지역',church:'고내리교회',pastor:'박장화',phone:'010-9858-2450',address:'논산시 연무읍 봉황로 412',type:'자립지향교회',qty:1,unit:'권'},
+{id:119,nohoe:'제주노회',church:'제주동도교회',pastor:'이상회',phone:'010-9770-3091',address:'제주특별자치도 제주시 삼성로 5길 13-21, 제주동도교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:120,nohoe:'서산태안지역',church:'산양교회',pastor:'김민호',phone:'010-9735-2220',address:'충남 아산시 번영로216번길36 신정아파트 303호',type:'자립지향교회',qty:1,unit:'권'},
+{id:121,nohoe:'이주민교회연합',church:'안디옥열방교회',pastor:'김종일',phone:'010-9290-8851',address:'경기도 남양주시 덕소로97번길101. 114동 505호',type:'자립지향교회',qty:1,unit:'권'},
+{id:122,nohoe:'경중노회',church:'누곡교회',pastor:'김현진',phone:'010-9177-5020',address:'대구광역시 군위군 삼국유사면 삼국유사로 1346-22',type:'자립지향교회',qty:1,unit:'권'},
+{id:123,nohoe:'진주노회',church:'반석교회',pastor:'하현수',phone:'010-8968-9182',address:'경남 진주시 도동로248번길 21-2 반석교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:124,nohoe:'전서노회',church:'산월교회',pastor:'류병택',phone:'010-8954-6731',address:'전북 부안군 동진면 산월길25-7 산월교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:125,nohoe:'공주논산지역',church:'초봉침례교회',pastor:'이인희',phone:'010-8740-0284',address:'공주시 이인면 선근리2길 35-6',type:'자립지향교회',qty:1,unit:'권'},
+{id:126,nohoe:'경중노회',church:'도옥교회',pastor:'노진만',phone:'010-8645-0191',address:'경북 의성군 안평면 도옥2길37 도옥교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:127,nohoe:'충북동노회',church:'대소원교회',pastor:'한태욱',phone:'010-8626-5774',address:'충주시 대소원면 국사봉길 106',type:'자립지향교회',qty:1,unit:'권'},
+{id:128,nohoe:'구미노회',church:'구미오가교회',pastor:'안성국',phone:'010-8482-0691',address:'인천 서구 율도로 15번길 26-8 원흥아파트810호',type:'자립지향교회',qty:1,unit:'권'},
+{id:129,nohoe:'이주민교회연합',church:'양주네팔교회',pastor:'진희수',phone:'010-8006-6071',address:'경기도 양주시 백석읍 오산리311-3번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:130,nohoe:'충북동노회',church:'성화교회',pastor:'장기용',phone:'010-7797-9642',address:'강원도 원주시 신림면 선학길13-6 성화교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:131,nohoe:'구미노회',church:'구평교회',pastor:'정병석',phone:'010-7742-1805',address:'경북 구미시 인동39길 18-37(구평교회)',type:'자립지향교회',qty:1,unit:'권'},
+{id:132,nohoe:'전서노회',church:'서광교회',pastor:'배홍섭',phone:'010-7678-7061',address:'정읍시 정읍교길8 서광교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:133,nohoe:'전서노회',church:'부곡소망교회',pastor:'조문찬',phone:'010-7531-1156',address:'전북 부안군 보안면 영목길71',type:'자립지향교회',qty:1,unit:'권'},
+{id:134,nohoe:'제주노회',church:'서귀포신일교회',pastor:'김현우',phone:'010-7494-7117',address:'제주특별자치도 서귀포시 남원읍 하례중앙로38-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:135,nohoe:'강동노회',church:'추동교회',pastor:'이종문',phone:'010-6722-9191',address:'강원도삼척시하장면추동2길29-34 추동교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:136,nohoe:'강동노회',church:'밀알장애인교회',pastor:'이성기',phone:'010-6712-1530',address:'강릉시 경강로2539번길8 104동 106호',type:'자립지향교회',qty:1,unit:'권'},
+{id:137,nohoe:'전서노회',church:'부안믿음의교회',pastor:'조재호',phone:'010-6611-2735',address:'전북특별자치도 부안군 부안읍 진성길 26 부안믿음의교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:138,nohoe:'전서노회',church:'방주교회',pastor:'김오성',phone:'010-6449-8033',address:'전북 정읍시 입암면 제내길 30',type:'자립지향교회',qty:1,unit:'권'},
+{id:139,nohoe:'강동노회',church:'대흥교회',pastor:'김성중',phone:'010-6428-3042',address:'동해시 효자로 639',type:'자립지향교회',qty:1,unit:'권'},
+{id:140,nohoe:'강동노회',church:'북쌍교회',pastor:'이희',phone:'010-5678-2109',address:'강원도 영월군 남면 들골안길 16-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:141,nohoe:'충북동노회',church:'선한목자교회',pastor:'고태호',phone:'010-5643-1615',address:'제천시 바이오 벨리로 211. 태양빌딩 3층',type:'자립지향교회',qty:1,unit:'권'},
+{id:142,nohoe:'전서노회',church:'덕천서부교회',pastor:'이충원',phone:'010-5528-0691',address:'전북 정읍시 덕천면 태고로 384',type:'자립지향교회',qty:1,unit:'권'},
+{id:143,nohoe:'전서노회',church:'새소망교회',pastor:'최현준',phone:'010-5018-3402',address:'전북 정읍시 소성면저동길120-24',type:'자립지향교회',qty:1,unit:'권'},
+{id:144,nohoe:'구미노회',church:'온유한교회',pastor:'문균식',phone:'010-4750-7335',address:'경북 칠곡군 석적읍 남율리 710 우방신천지아파트 103동 901호',type:'자립지향교회',qty:1,unit:'권'},
+{id:145,nohoe:'서산태안지역',church:'삼흥교회',pastor:'김남태',phone:'010-4657-8131',address:'충남 태안군 근흥면 안마길 128-10',type:'자립지향교회',qty:1,unit:'권'},
+{id:146,nohoe:'이주민교회연합',church:'은혜가 넘치는 태국교회',pastor:'강승우',phone:'010-4591-0191',address:'경기도 양주시 가래비길42, 3층',type:'자립지향교회',qty:1,unit:'권'},
+{id:147,nohoe:'강동노회',church:'조탄은혜교회',pastor:'양요한',phone:'010-4579-2690',address:'강원특별자치도 태백시 조탄길 30',type:'자립지향교회',qty:1,unit:'권'},
+{id:148,nohoe:'여수지역',church:'하화교회',pastor:'김영구',phone:'010-4348-2552',address:'전남 여수시 화정면 아랫꽃섬 2길 2-9',type:'자립지향교회',qty:1,unit:'권'},
+{id:149,nohoe:'공주논산지역',church:'새생명교회',pastor:'이순구',phone:'010-3911-5950',address:'공주시 웅진절골 3길 25 (경일아파트 가동 404)',type:'자립지향교회',qty:1,unit:'권'},
+{id:150,nohoe:'구미노회',church:'한사랑교회',pastor:'김성윤',phone:'010-3825-2767',address:'구미시 금오대로 20길19',type:'자립지향교회',qty:1,unit:'권'},
+{id:151,nohoe:'구미노회',church:'북삼드림교회',pastor:'하대성',phone:'010-3809-9993',address:'경북 칠곡군 북삼읍 북삼로159 3층 북삼드림교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:152,nohoe:'무안노회',church:'효지교회',pastor:'임종민',phone:'010-3641-5654',address:'전남 신안군 지도읍 효지길 33-11',type:'자립지향교회',qty:1,unit:'권'},
+{id:153,nohoe:'무안노회',church:'임자삼부교회',pastor:'이문수',phone:'010-3615-0691',address:'전남 신안군 임자면 임자서길406',type:'자립지향교회',qty:1,unit:'권'},
+{id:154,nohoe:'제주노회',church:'제주은총교회',pastor:'우광일',phone:'010-3479-5133',address:'제주시 진남로2길 32 제주은총교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:155,nohoe:'진주노회',church:'동지교회',pastor:'배정모',phone:'010-3433-7461',address:'진주시 지수면 용봉로710-1 동지교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:156,nohoe:'강동노회',church:'감사교회',pastor:'김종협',phone:'010-3359-9477',address:'강원특별자치도 삼척시 원덕읍 임원안길 184-22',type:'자립지향교회',qty:1,unit:'권'},
+{id:157,nohoe:'경중노회',church:'토현교회',pastor:'이병재',phone:'010-3351-9781',address:'경북 의성군 사곡면 공룡로624 토현교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:158,nohoe:'전서노회',church:'고성교회',pastor:'임성만',phone:'010-3342-5776',address:'전북 고창군 고수면 초내길 24 고성교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:159,nohoe:'경중노회',church:'송화교회',pastor:'조용진',phone:'010-3261-6203',address:'경북 의성군 다인면 송화길 45',type:'자립지향교회',qty:1,unit:'권'},
+{id:160,nohoe:'무안노회',church:'현경제일교회',pastor:'남정광',phone:'010-3254-0677',address:'전남 무안군 현경면 현시길 21',type:'자립지향교회',qty:1,unit:'권'},
+{id:161,nohoe:'공주논산지역',church:'소망의교회',pastor:'유은성',phone:'010-3085-5222',address:'공주시 계룡면 구부내로 651 소망의교회 사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:162,nohoe:'강동노회',church:'송정교회',pastor:'조승환',phone:'010-3003-1376',address:'강원특별자치도 고성군 거진읍 건봉사로 1522-10',type:'자립지향교회',qty:1,unit:'권'},
+{id:163,nohoe:'제주노회',church:'섬다교회',pastor:'손현완',phone:'010-2839-2976',address:'제주시 도령로 132 지하1층 섬다교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:164,nohoe:'구미노회',church:'안곡교회',pastor:'권성준',phone:'010-2797-2994',address:'경북 구미시 무을면 안곡2길 7번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:165,nohoe:'강동노회',church:'예수생명교회',pastor:'이선규',phone:'010-2762-4621',address:'강릉시 강릉대로 172 지층',type:'자립지향교회',qty:1,unit:'권'},
+{id:166,nohoe:'구미노회',church:'생곡교회',pastor:'김성구',phone:'010-2674-7095',address:'구미시 선산읍 유학2길 25-22 생곡교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:167,nohoe:'여수지역',church:'쉼이있는교회',pastor:'서석훈',phone:'010-2655-7774',address:'전남 여수시 도원로 167. 2층 쉼이있는교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:168,nohoe:'전서노회',church:'남광교회',pastor:'박광석',phone:'010-2630-7808',address:'정읍시 구계교암길47',type:'자립지향교회',qty:1,unit:'권'},
+{id:169,nohoe:'여수지역',church:'나진교회',pastor:'김은길',phone:'010-2594-5080',address:'여수시 화양면 나진길24',type:'자립지향교회',qty:1,unit:'권'},
+{id:170,nohoe:'진주노회',church:'사천교회',pastor:'정계규',phone:'010-2585-2377',address:'경남 사천시 정동면 예수리 847',type:'자립지향교회',qty:1,unit:'권'},
+{id:171,nohoe:'진주노회',church:'손목교회',pastor:'이병군',phone:'010-2417-3646',address:'경남 합천군 용주면 손목2길 23-1',type:'자립지향교회',qty:1,unit:'권'},
+{id:172,nohoe:'구미노회',church:'구미이레교회',pastor:'임병수',phone:'010-9152-7095',address:'경상북도 구미시 송정대로10길22 101동604호',type:'자립지향교회',qty:1,unit:'권'},
+{id:173,nohoe:'강동노회',church:'미탄중앙교회',pastor:'박해권',phone:'010-2036-3077',address:'강원도 평창군 미탄면 새터길 22',type:'자립지향교회',qty:1,unit:'권'},
+{id:174,nohoe:'진주노회',church:'아름다운교회',pastor:'홍상근',phone:'010-9970-5774',address:'경남 사천시 용강길37 용강2주공아파트 206동 503호',type:'자립지향교회',qty:1,unit:'권'},
+{id:175,nohoe:'공주논산지역',church:'용담전원교회',pastor:'백귀덕',phone:'010-9454-4975',address:'전북 진안군 용담면 대송로 31-13 용담전원교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:176,nohoe:'진주노회',church:'이곡교회',pastor:'박용우',phone:'010-9272-7305',address:'진주시 문산읍 이곡길 110',type:'자립지향교회',qty:1,unit:'권'},
+{id:177,nohoe:'공주논산지역',church:'동산교회',pastor:'서무석',phone:'010-9231-1325',address:'충남 논산시 가야곡면 삼전 1길 10번지',type:'자립지향교회',qty:1,unit:'권'},
+{id:178,nohoe:'경중노회',church:'사미교회',pastor:'곽병구',phone:'010-8594-0691',address:'경북 의성군 춘산면 사미길4-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:179,nohoe:'구미노회',church:'웅곡교회',pastor:'위봉수',phone:'010-8593-0565',address:'경북 구미시 무을면 웅곡2길 18 웅곡교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:180,nohoe:'진주노회',church:'남가람교회',pastor:'정운철',phone:'010-8009-8280',address:'경남 진주시 정자천로63번길1',type:'자립지향교회',qty:1,unit:'권'},
+{id:181,nohoe:'경중노회',church:'전흥교회',pastor:'최준희',phone:'010-7771-1287',address:'경북 의성군 옥산면 금봉로 433-12 전흥교회내',type:'자립지향교회',qty:1,unit:'권'},
+{id:182,nohoe:'강동노회',church:'옥광교회',pastor:'문현진',phone:'010-7410-0091',address:'강원특별자치도 영월군 김삿갓면 모운동길 479-23 옥광교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:183,nohoe:'이주민교회연합',church:'호산나 선교 교회',pastor:'박향순',phone:'010-7216-7416',address:'의정부시 평화로 715 경화 빌딩2층 호산나 교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:184,nohoe:'강동노회',church:'다사랑교회',pastor:'김옥진',phone:'010-6664-6558',address:'강릉시 박월길 99번길 29',type:'자립지향교회',qty:1,unit:'권'},
+{id:185,nohoe:'경중노회',church:'양지교회',pastor:'류기선',phone:'010-6557-1282',address:'경북 의성군 사곡면 구눌길 89-4 양지교회내',type:'자립지향교회',qty:1,unit:'권'},
+{id:186,nohoe:'강동노회',church:'마차중앙교회',pastor:'유혁준',phone:'010-6438-7076',address:'강원도 영월군 북면 마차중앙2길65 마차중앙교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:187,nohoe:'강동노회',church:'도전교회',pastor:'박수익',phone:'010-6384-5332',address:'강원도 정선군 임계면 눈꽃마을길 162 도전교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:188,nohoe:'무안노회',church:'구남교회',pastor:'고한호',phone:'010-5929-3927',address:'전남 무안군 청계면 해안로 266-6',type:'자립지향교회',qty:1,unit:'권'},
+{id:189,nohoe:'이주민교회연합',church:'애양교회',pastor:'이광구',phone:'010-5542-4044',address:'포천시 해룡로16번길 9-42',type:'자립지향교회',qty:1,unit:'권'},
+{id:190,nohoe:'전서노회',church:'이평주안교회',pastor:'심주섭',phone:'010-5427-1447',address:'전북 정읍시 이평면 오산2길 148 이평주안교회 사택',type:'자립지향교회',qty:1,unit:'권'},
+{id:191,nohoe:'이주민교회연합',church:'백석교회',pastor:'조기문',phone:'010-5418-3025',address:'경기도 양주시 백석읍 고릉말로 128번길 28-15',type:'자립지향교회',qty:1,unit:'권'},
+{id:192,nohoe:'서산태안지역',church:'일도교회',pastor:'김무환',phone:'010-5246-9408',address:'충남 당진시 정미면 수당천로 60',type:'자립지향교회',qty:1,unit:'권'},
+{id:193,nohoe:'강동노회',church:'율치교회',pastor:'서명성',phone:'010-4865-0191',address:'강원도 영월군 북면 밤재로956 율치교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:194,nohoe:'전서노회',church:'수곡교회',pastor:'국창길',phone:'010-4415-5508',address:'정읍시칠보면 칠보산로 1213-8 수곡교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:195,nohoe:'강동노회',church:'위촌리교회',pastor:'이동우',phone:'010-4276-9376',address:'강릉시 성산면 양지말길 42-8',type:'자립지향교회',qty:1,unit:'권'},
+{id:196,nohoe:'진주노회',church:'한빛교회',pastor:'박광용',phone:'010-3292-5711',address:'경남 진주시 강남로 45 금호석류 마을 108동 1603호',type:'자립지향교회',qty:1,unit:'권'},
+{id:197,nohoe:'공주논산지역',church:'성유교회',pastor:'최예후',phone:'010-2817-2578',address:'(주소 확인 필요)',type:'자립지향교회',qty:1,unit:'권'},
+{id:198,nohoe:'강동노회',church:'어단우리교회',pastor:'김주철',phone:'010-2770-0442',address:'강릉시 구정면 금평로 486-4',type:'자립지향교회',qty:1,unit:'권'},
+{id:199,nohoe:'전서노회',church:'열방교회',pastor:'나완식',phone:'010-2679-3231',address:'정읍시 입석남길 21',type:'자립지향교회',qty:1,unit:'권'},
+{id:200,nohoe:'충북동노회',church:'새물결교회',pastor:'주만중',phone:'010-2656-6783',address:'충주시 하풍1길7 새물결교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:201,nohoe:'구미노회',church:'예닮교회',pastor:'이영광',phone:'010-2361-5245',address:'경북 구미시 봉곡로20길 17-7',type:'자립지향교회',qty:1,unit:'권'},
+{id:202,nohoe:'무안노회',church:'죽산교회',pastor:'문현수',phone:'010-2059-2870',address:'전남 무안군 일로읍 일로로 514-1 죽산교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:203,nohoe:'제주노회',church:'동홍교회',pastor:'박창건',phone:'010-2007-9149',address:'서귀포시 동홍로109번길 48 동홍교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:204,nohoe:'전서노회',church:'보안중앙교회',pastor:'고동훈',phone:'010-6601-1371',address:'전북 부안군 보안면 외포길8',type:'자립지향교회',qty:1,unit:'권'},
+{id:205,nohoe:'진주노회',church:'진주벧엘교회',pastor:'주영삼',phone:'010-6388-1044',address:'경남 진주시 대신로389번길 진주벧엘교회2층',type:'자립지향교회',qty:1,unit:'권'},
+{id:206,nohoe:'강동노회',church:'신현교회',pastor:'임성수',phone:'010-5389-0643',address:'강원도 정선군 정선읍 와평2길 18-3 신현교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:207,nohoe:'무안노회',church:'청계중앙교회',pastor:'이윤동',phone:'010-3124-0675',address:'전남 무안군 청계면 해안로 33 청계중앙교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:208,nohoe:'진주노회',church:'남해초전교회',pastor:'김삼열',phone:'010-2890-4078',address:'경남 남해군 미조면 남해대로 272-4 남해초전교회',type:'자립지향교회',qty:1,unit:'권'},
+{id:209,nohoe:'진주노회',church:'서암',pastor:'박영진',phone:'010-2567-8349',address:'경남 의령군 봉수면 한지8길 11서암교회',type:'자립지향교회',qty:1,unit:'권'}
+];
+
+let nextId=210, selectedType=null, pendingEntry=null, currentPage=1;
+const PAGE_SIZE=20;
+
+function isOpen(){
+  if(!settings.open)return false;
+  const t=new Date().toISOString().slice(0,10);
+  return t>=settings.start&&t<=settings.end;
+}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='apply')||(i===1&&t==='admin')));
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',(i===0&&t==='apply')||(i===1&&t==='admin')));
+  if(t==='apply'){settings=loadSettings();renderApply();}
+}
+function onNohoeChange(){
+  const s=document.getElementById('f-nohoe'),h=document.getElementById('partner-hint');
+  if(!s||s.value===''){if(h)h.textContent='';return;}
+  const p=NOHOE_LIST[parseInt(s.value)].pastor;
+  if(h)h.textContent=p?'파트너 목사: '+p:'';
+}
+function selectType(i){
+  selectedType=i;
+  document.querySelectorAll('.type-item').forEach((el,j)=>el.classList.toggle('selected',j===i));
+}
+function renderApply(){
+  selectedType=null;pendingEntry=null;
+  const open=isOpen();
+  let html=`<div class="event-banner">
+    <div class="event-label"><span class="dot ${open?'dot-open':'dot-closed'}"></span>${open?'신청 진행 중':'신청 종료'}</div>
+    <div class="event-item">${settings.item}</div>
+    <div class="event-period">신청 기간: <span>${settings.start}</span> ~ <span>${settings.end}</span></div>
+  </div>`;
+  if(settings.desc)html+=`<div class="event-desc">${settings.desc}</div>`;
+  if(!open)html+=`<div class="event-closed">현재 진행 중인 지원 이벤트가 없습니다</div>`;
+  html+=`<div class="card">
+    <div style="font-size:15px;font-weight:600;margin-bottom:1.25rem">지원 신청서</div>
+    <div class="field"><label>노회 선택 <span class="req">*</span></label>
+      <select id="f-nohoe" onchange="onNohoeChange()">
+        <option value="">— 노회를 선택하세요 —</option>
+        ${NOHOE_LIST.map((n,i)=>`<option value="${i}">${n.name}${n.pastor?' ('+n.pastor+')':''}</option>`).join('')}
+      </select>
+      <div class="partner-hint" id="partner-hint"></div>
+    </div>
+    <div class="field"><label>교회 유형 <span class="req">*</span></label>
+      <div class="type-grid">${CHURCH_TYPES.map((t,i)=>`<div class="type-item" onclick="selectType(${i})">${t}</div>`).join('')}</div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>교회명 <span class="req">*</span></label><input id="f-church" placeholder="예: 소망교회"></div>
+      <div class="field"><label>담임목사 성함 <span class="req">*</span></label><input id="f-pastor" placeholder="예: 홍길동"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>연락처 <span class="req">*</span></label>
+        <div style="display:flex;align-items:center;border:1px solid #d0d0c8;border-radius:8px;overflow:hidden;background:#fff">
+          <span style="padding:9px 10px 9px 12px;font-size:14px;color:#1a1a1a;background:#f0f0e8;border-right:1px solid #d0d0c8;white-space:nowrap;flex-shrink:0">010</span>
+          <input id="f-phone" type="tel" maxlength="8" placeholder="00000000" inputmode="numeric"
+            style="border:none;border-radius:0;flex:1;font-size:14px;padding:9px 12px;outline:none;background:#fff;color:#1a1a1a"
+            oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,8)">
+        </div>
+      </div>
+      <div class="field"><label>수량 <span class="req">*</span></label>
+        <div class="qty-row"><input type="number" id="f-qty" placeholder="0" min="1" max="9999"><div class="qty-unit">${settings.unit}</div></div>
+      </div>
+    </div>
+    <div class="field"><label>교회 주소 <span class="req">*</span></label><input id="f-address" placeholder="예: 서울특별시 강북구 수유동 123-45"></div>
+    <button class="submit-btn" onclick="submitApp()" ${open?'':'disabled'}>${open?`${settings.item} 신청하기`:'현재 신청 기간이 아닙니다'}</button>
+  </div>`;
+  document.getElementById('apply-content').innerHTML=html;
+}
+function submitApp(){
+  const ni=document.getElementById('f-nohoe').value;
+  if(ni===''){alert('노회를 선택해주세요');return;}
+  if(selectedType===null){alert('교회 유형을 선택해주세요');return;}
+  const ch=document.getElementById('f-church').value.trim(),pa=document.getElementById('f-pastor').value.trim();
+  const ph='010'+document.getElementById('f-phone').value.trim(),ad=document.getElementById('f-address').value.trim();
+  const qt=document.getElementById('f-qty').value.trim();
+  const phoneRaw=document.getElementById('f-phone').value.trim();
+  if(!ch||!pa||!phoneRaw||!ad||!qt){alert('필수 항목을 모두 입력해주세요');return;}
+  if(phoneRaw.length!==8){alert('연락처 뒷자리 8자리를 모두 입력해주세요');return;}
+  if(parseInt(qt)<1||isNaN(parseInt(qt))){alert('수량을 올바르게 입력해주세요');return;}
+  const n=NOHOE_LIST[parseInt(ni)];
+  pendingEntry={id:nextId,church:ch,nohoe:n.name,partner:n.pastor,pastor:pa,phone:ph,address:ad,type:CHURCH_TYPES[selectedType],qty:parseInt(qt),unit:settings.unit};
+  document.getElementById('confirm-address').textContent=ad;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');pendingEntry=null;}
+function finalSubmit(){
+  if(!pendingEntry)return;
+  applications.push(pendingEntry);nextId++;
+  const e=pendingEntry;pendingEntry=null;
+  document.getElementById('confirm-modal').classList.remove('open');
+  document.getElementById('apply-content').innerHTML=`<div class="success-box"><p style="font-size:28px;margin-bottom:10px">✓</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">신청이 완료되었습니다</p><p>${e.church} (${e.pastor} 목사님)<br>${settings.item} ${e.qty}${e.unit} 신청이 접수되었습니다.<br>담당자가 확인 후 연락드리겠습니다.</p></div>`;
+}
+function checkPw(){
+  if(document.getElementById('pw-input').value==='1234'){
+    document.getElementById('admin-lock-wrap').style.display='none';
+    document.getElementById('admin-panel').classList.add('open');
+    renderAdmin();
+  }else{alert('비밀번호가 틀렸습니다');}
+}
+function saveSettings(){
+  settings.item=document.getElementById('s-item').value||settings.item;
+  settings.unit=document.getElementById('s-unit').value||settings.unit;
+  settings.start=document.getElementById('s-start').value||settings.start;
+  settings.end=document.getElementById('s-end').value||settings.end;
+  settings.desc=document.getElementById('s-desc').value;
+  settings.open=document.getElementById('s-open').checked;
+  try{localStorage.setItem('gj_settings',JSON.stringify(settings));localStorage.setItem('gj_ver',SETTINGS_VER);}catch(e){}
+  renderAdmin();alert('저장되었습니다! 신청 화면에 바로 반영됩니다.');
+}
+function getFiltered(){
+  const q=(document.getElementById('f-search')||{}).value?.toLowerCase()||'';
+  const nf=(document.getElementById('f-nohoe-filter')||{}).value||'';
+  return applications.filter(a=>{
+    if(nf&&a.nohoe!==nf)return false;
+    if(q&&!(a.church.toLowerCase().includes(q)||a.pastor.toLowerCase().includes(q)))return false;
+    return true;
+  });
+}
+function renderAdmin(){
+  document.getElementById('s-item').value=settings.item;
+  document.getElementById('s-unit').value=settings.unit;
+  document.getElementById('s-start').value=settings.start;
+  document.getElementById('s-end').value=settings.end;
+  document.getElementById('s-desc').value=settings.desc;
+  document.getElementById('s-open').checked=settings.open;
+  const total=applications.length,qty=applications.reduce((s,a)=>s+a.qty,0);
+  const nc=new Set(applications.map(a=>a.nohoe)).size;
+  document.getElementById('admin-stats').innerHTML=
+    `<div class="stat-card"><div class="l">총 신청 교회</div><div class="n">${total}</div></div>`+
+    `<div class="stat-card"><div class="l">총 신청 수량</div><div class="n">${qty}${settings.unit}</div></div>`+
+    `<div class="stat-card"><div class="l">참여 노회</div><div class="n">${nc}</div></div>`+
+    `<div class="stat-card"><div class="l">미참여 노회</div><div class="n">${NOHOE_LIST.length-nc}</div></div>`;
+  const nMap={};applications.forEach(a=>{nMap[a.nohoe]=(nMap[a.nohoe]||0)+1;});
+  const sorted=Object.entries(nMap).sort((a,b)=>b[1]-a[1]),max=sorted[0]?sorted[0][1]:1;
+  document.getElementById('nohoe-chart').innerHTML=sorted.map(([n,c])=>`
+    <div class="nohoe-row"><div class="nohoe-label">${n}</div>
+    <div class="nohoe-bar-wrap"><div class="nohoe-bar" style="width:${Math.round(c/max*100)}%"></div></div>
+    <div class="nohoe-cnt">${c}건</div></div>`).join('');
+  const nf=document.getElementById('f-nohoe-filter'),cur=nf.value;
+  nf.innerHTML='<option value="">전체 노회</option>'+sorted.map(([n])=>`<option value="${n}"${n===cur?'selected':''}>${n}</option>`).join('');
+  renderList();
+}
+function renderList(){currentPage=1;renderPage();}
+function renderPage(){
+  const filtered=getFiltered(),total=filtered.length;
+  document.getElementById('list-count').textContent=total;
+  const pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(currentPage>pages)currentPage=pages;
+  const slice=filtered.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+  const list=document.getElementById('admin-list');
+  if(!slice.length){list.innerHTML='<div class="no-data">검색 결과가 없습니다</div>';}
+  else list.innerHTML=slice.map(a=>`
+    <div class="list-row">
+      <span class="cell">${a.church}<br><span style="font-size:11px;color:#888">${a.pastor} 목사</span></span>
+      <span class="cell" style="font-size:12px">${a.nohoe}</span>
+      <span class="cell" style="font-size:12px">${a.phone}</span>
+      <span class="cell" style="font-size:11px;color:#888" title="${a.address}">${a.address.slice(0,22)}${a.address.length>22?'…':''}</span>
+      <span><button class="del-btn" onclick="delApp(${a.id})">✕</button></span>
+    </div>`).join('');
+  document.getElementById('pg-info').textContent=`${currentPage} / ${pages}`;
+  document.getElementById('pg-prev').disabled=currentPage<=1;
+  document.getElementById('pg-next').disabled=currentPage>=pages;
+}
+function changePage(d){currentPage+=d;renderPage();}
+function delApp(id){
+  if(confirm('이 항목을 삭제할까요?')){applications=applications.filter(a=>a.id!==id);renderAdmin();}
+}
+function exportCSV(){
+  const filtered=getFiltered();
+  const rows=[['교회명','노회','담임목사','연락처','교회유형','주소','수량'],
+    ...filtered.map(a=>[a.church,a.nohoe,a.pastor,a.phone,a.type,a.address,a.qty+(a.unit||'권')])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const el=document.createElement('a');el.href=URL.createObjectURL(blob);
+  el.download=`${settings.item}_신청목록_${new Date().toISOString().slice(0,10)}.csv`;el.click();
+}
+renderApply();
+</script>
+</body>
+</html>
