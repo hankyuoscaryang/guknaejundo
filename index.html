@@ -239,7 +239,9 @@ const NOHOE_LIST=[
 ];
 const CHURCH_TYPES=['자립지향교회','차상위교회','자립교회'];
 
-let settings={item:'책(2025 국내전도)',unit:'권',start:'2025-09-13',end:'2025-09-20',desc:'2025 국내전도 파트너노회 책 지원 이벤트입니다.\n신청하신 교회에 책을 발송해 드립니다.\n정확한 주소를 입력해 주세요.',open:false};
+const DEFAULT_SETTINGS={item:'책(2025 국내전도)',unit:'권',start:'2025-09-13',end:'2025-09-20',desc:'2025 국내전도 파트너노회 책 지원 이벤트입니다.\n신청하신 교회에 책을 발송해 드립니다.\n정확한 주소를 입력해 주세요.',open:false};
+function loadSettings(){try{const s=localStorage.getItem('gj_settings');return s?JSON.parse(s):DEFAULT_SETTINGS;}catch(e){return DEFAULT_SETTINGS;}}
+let settings=loadSettings();
 
 let applications=[
 {id:1,nohoe:'무안노회',church:'꿈이있는비전교회',pastor:'표성욱',phone:'010-9979-6989',address:'신안군 임자면 이흑암길 35 1층',type:'자립지향교회',qty:1,unit:'권'},
@@ -464,7 +466,7 @@ function isOpen(){
 function switchTab(t){
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='apply')||(i===1&&t==='admin')));
   document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',(i===0&&t==='apply')||(i===1&&t==='admin')));
-  if(t==='apply')renderApply();
+  if(t==='apply'){settings=loadSettings();renderApply();}
 }
 function onNohoeChange(){
   const s=document.getElementById('f-nohoe'),h=document.getElementById('partner-hint');
@@ -503,7 +505,14 @@ function renderApply(){
       <div class="field"><label>담임목사 성함 <span class="req">*</span></label><input id="f-pastor" placeholder="예: 홍길동"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>연락처 <span class="req">*</span></label><input id="f-phone" placeholder="010-0000-0000" type="tel"></div>
+      <div class="field"><label>연락처 <span class="req">*</span></label>
+        <div style="display:flex;align-items:center;border:1px solid #d0d0c8;border-radius:8px;overflow:hidden;background:#fff">
+          <span style="padding:9px 10px 9px 12px;font-size:14px;color:#1a1a1a;background:#f0f0e8;border-right:1px solid #d0d0c8;white-space:nowrap;flex-shrink:0">010</span>
+          <input id="f-phone" type="tel" maxlength="8" placeholder="00000000" inputmode="numeric"
+            style="border:none;border-radius:0;flex:1;font-size:14px;padding:9px 12px;outline:none;background:#fff;color:#1a1a1a"
+            oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,8)">
+        </div>
+      </div>
       <div class="field"><label>수량 <span class="req">*</span></label>
         <div class="qty-row"><input type="number" id="f-qty" placeholder="0" min="1" max="9999"><div class="qty-unit">${settings.unit}</div></div>
       </div>
@@ -518,9 +527,11 @@ function submitApp(){
   if(ni===''){alert('노회를 선택해주세요');return;}
   if(selectedType===null){alert('교회 유형을 선택해주세요');return;}
   const ch=document.getElementById('f-church').value.trim(),pa=document.getElementById('f-pastor').value.trim();
-  const ph=document.getElementById('f-phone').value.trim(),ad=document.getElementById('f-address').value.trim();
+  const ph='010'+document.getElementById('f-phone').value.trim(),ad=document.getElementById('f-address').value.trim();
   const qt=document.getElementById('f-qty').value.trim();
-  if(!ch||!pa||!ph||!ad||!qt){alert('필수 항목을 모두 입력해주세요');return;}
+  const phoneRaw=document.getElementById('f-phone').value.trim();
+  if(!ch||!pa||!phoneRaw||!ad||!qt){alert('필수 항목을 모두 입력해주세요');return;}
+  if(phoneRaw.length!==8){alert('연락처 뒷자리 8자리를 모두 입력해주세요');return;}
   if(parseInt(qt)<1||isNaN(parseInt(qt))){alert('수량을 올바르게 입력해주세요');return;}
   const n=NOHOE_LIST[parseInt(ni)];
   pendingEntry={id:nextId,church:ch,nohoe:n.name,partner:n.pastor,pastor:pa,phone:ph,address:ad,type:CHURCH_TYPES[selectedType],qty:parseInt(qt),unit:settings.unit};
@@ -549,7 +560,8 @@ function saveSettings(){
   settings.end=document.getElementById('s-end').value||settings.end;
   settings.desc=document.getElementById('s-desc').value;
   settings.open=document.getElementById('s-open').checked;
-  renderAdmin();alert('저장되었습니다!');
+  try{localStorage.setItem('gj_settings',JSON.stringify(settings));}catch(e){}
+  renderAdmin();alert('저장되었습니다! 신청 화면에 바로 반영됩니다.');
 }
 function getFiltered(){
   const q=(document.getElementById('f-search')||{}).value?.toLowerCase()||'';
